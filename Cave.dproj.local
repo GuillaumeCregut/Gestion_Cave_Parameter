@@ -2,9 +2,9 @@
 <BorlandProject>
 	<Transactions>
     <Transaction>2024/08/26 19:48:12.000.029,=F:\projets\Embarcadero\Unit1.pas</Transaction>
-    <Transaction>2024/08/26 19:48:55.000.001,F:\projets\Embarcadero\Uppale.dfm=F:\projets\Embarcadero\Unit1.dfm</Transaction>
-    <Transaction>2024/08/26 19:48:55.000.001,F:\projets\Embarcadero\Uppale.pas=F:\projets\Embarcadero\Unit1.pas</Transaction>
-    <Transaction>2024/08/26 19:49:06.000.751,F:\projets\Embarcadero\Cave\Cave.dproj=F:\projets\Embarcadero\Project1.dproj</Transaction>
+    <Transaction>2024/08/26 19:48:55.000.001,F:\projets\Embarcadero\Unit1.dfm=F:\projets\Embarcadero\Uppale.dfm</Transaction>
+    <Transaction>2024/08/26 19:48:55.000.001,F:\projets\Embarcadero\Unit1.pas=F:\projets\Embarcadero\Uppale.pas</Transaction>
+    <Transaction>2024/08/26 19:49:06.000.751,F:\projets\Embarcadero\Project1.dproj=F:\projets\Embarcadero\Cave\Cave.dproj</Transaction>
     <Transaction>2024/08/26 19:53:24.000.174,=F:\projets\Embarcadero\Cave\Uppale.pas</Transaction>
   </Transactions>
 	<ProjectSortOrder AutoSort="0" SortType="0">
