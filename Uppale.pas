@@ -100,7 +100,7 @@ var
 implementation
 
 {$R *.dfm}
-//TODO: Change ProgHasChanged for wifi and params
+//TODO: Change ProgHasChanged for wifi and params when values changes
 function TFPpale.CreateProg(): TStringList;
 var
   IpAdress, SubnetMask, DNS1, DNS2, Gateway, SSID, PassWifi, APIKey,
