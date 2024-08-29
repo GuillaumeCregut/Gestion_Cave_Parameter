@@ -414,7 +414,7 @@ object FPpale: TFPpale
         Height = 25
         Caption = 'Lecture'
         TabOrder = 2
-        OnClick = BReadProdClick
+        OnClick = BReadProgClick
       end
       object BWriteProg: TButton
         Left = 520

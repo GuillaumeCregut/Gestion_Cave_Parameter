@@ -74,7 +74,7 @@ type
     function CreateProg(): TStringList;
     procedure MEIpServerExit(Sender: TObject);
     procedure BWriteProgClick(Sender: TObject);
-    procedure BReadProdClick(Sender: TObject);
+    procedure BReadProgClick(Sender: TObject);
     procedure ESsidChange(Sender: TObject);
     procedure EWifiPassChange(Sender: TObject);
     procedure FillProg(SSID: String; WifiKey: String; DHCP: Boolean;
@@ -337,13 +337,14 @@ end;
 { *
   * Read board Programmation
   * }
-procedure TFPpale.BReadProdClick(Sender: TObject);
+procedure TFPpale.BReadProgClick(Sender: TObject);
 var
   serialProtocol: TSerialProtocol;
   BoardConfig: TStringList;
   rSSID, rIpAdress, rSubnet, rGateway, rDNS1, rDNS2, rIPServer, rAppKey,
     rPeriod, rWifiKey: String;
   rDHCP: Boolean;
+  Count: Integer;
 begin
   rSSID := '';
   rIpAdress := '';
@@ -355,6 +356,7 @@ begin
   rAppKey := '';
   rPeriod := '';
   rWifiKey := '';
+  Count := 0;
   rDHCP := True;
   serialProtocol := TSerialProtocol.create(self);
   BoardConfig := TStringList.create;
@@ -365,12 +367,30 @@ begin
   try
     // Open protocole and read datas
     BoardConfig := serialProtocol.ReadBoard;
-    // TODO: Implements
+    rSSID := BoardConfig.Strings[0];
+    rWifiKey := BoardConfig.Strings[1];
+    if BoardConfig[2] = '0' then
+    begin
+      rIpAdress := BoardConfig[3];
+      rSubnet := BoardConfig[4];
+      rDHCP := False;
+      rGateway := BoardConfig[5];
+      rDNS1 := BoardConfig[6];
+      rDNS2 := BoardConfig[7];
+      Count := 5;
+    end
+    else
+    begin
+      rDHCP := True;
+    end;
+    rIPServer := BoardConfig[Count + 3]; // 3 ou 8
+    rAppKey := BoardConfig[Count + 4];
+    rPeriod := BoardConfig[Count + 5];
     // Store Data in app
-    { (   IPAdress: String; Subnet: String; Gateway: String; DNS1: String; DNS2: String;
-      IPServer: String; AppKey: String; Period: String); }
     FillProg(rSSID, rWifiKey, rDHCP, rIpAdress, rSubnet, rGateway, rDNS1, rDNS2,
       rIPServer, rAppKey, rPeriod);
+   // progHasChanged:=True;       //Remove while not operationnal
+    StoreToRegistry;
   except
     on Exception do
     begin
@@ -404,7 +424,7 @@ var
   transfertResult: Boolean;
 begin
   prog := TStringList.create;
-  transfertResult := false;
+  transfertResult := False;
   StoreToRegistry();
   protocol := TSerialProtocol.create(self);
   try
@@ -466,9 +486,9 @@ begin
   DNS1Card := '';
   DNS2Card := '';
   IpServerCard := '';
-  isValidate := false;
-  serialHasChanged := false;
-  progHasChanged := false;
+  isValidate := False;
+  serialHasChanged := False;
+  progHasChanged := False;
   useDHCP := True;
   LoadComNumber();
   LoadFromRegistry();
@@ -530,7 +550,7 @@ begin
       reg.WriteInteger('Datas', CBDatas.ItemIndex);
       // Store stop Bit
       reg.WriteInteger('Stop', CBStop.ItemIndex);
-      serialHasChanged := false;
+      serialHasChanged := False;
     end;
     if progHasChanged then
     begin
@@ -544,7 +564,7 @@ begin
       reg.WriteString('Server_IP', MEIpServer.Text);
       reg.WriteString('App_Key', EAppKey.Text);
       reg.WriteString('Period', EPeriod.Text);
-      progHasChanged := false;
+      progHasChanged := False;
     end;
   finally
     reg.Free;
@@ -563,7 +583,7 @@ begin
   reg.RootKey := HKEY_CURRENT_USER;
   if reg.KeyExists(RegKey) then
   begin
-    reg.OpenKey(RegKey, false);
+    reg.OpenKey(RegKey, False);
     // Load Parity
     CBParity.ItemIndex := reg.ReadInteger('Parity');
     // Load BaudRate
@@ -701,7 +721,7 @@ begin
   begin
     MessageDlg('Key not found', TMsgDlgType.mtWarning, mbOKCancel, 0);
   end;
-  openResult := reg.OpenKey('HARDWARE\DEVICEMAP\SERIALCOMM\', false);
+  openResult := reg.OpenKey('HARDWARE\DEVICEMAP\SERIALCOMM\', False);
   if (not openResult) then
   begin
     MessageDlg('Key not found', TMsgDlgType.mtWarning, mbOKCancel, 0);
