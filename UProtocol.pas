@@ -9,6 +9,7 @@ TSerialProtocol =class (TComponent)
 
 private
    comPort: TApdComPort;
+   Error : Boolean;
    ACKReceived : Boolean;
    procedure sendToBoard(data : String);
    procedure OnReceiveData(CP: TObject; Count: Word);
@@ -19,7 +20,7 @@ public
   isInit : Boolean;
    constructor Create(AOwner: TComponent); override;
    destructor Destroy; override;
-
+   function ReadBoard(): TStringList;
    function sendProgram(datas: TStringList): boolean;
    procedure Init(Port: Integer; Baud: Integer;Datas: Integer; Parity :Integer;Stop: Integer);
 end;
@@ -33,6 +34,7 @@ begin
    comPort:= TApdComPort.create(Aowner);
    comPort.OnTriggerAvail:=OnReceiveData;
    isInit:= false;
+   Error:= false;
    comPort.AutoOpen:= false;
 end;
 
@@ -75,6 +77,10 @@ begin
     begin
        Application.ProcessMessages;
     end;
+    if Error then
+    begin
+      //Do something
+    end;
     comPort.Open:=false;
 end;
 
@@ -97,14 +103,40 @@ showMessage('MEthode appelée');
 end;
 
 procedure TSerialProtocol.OnReceiveData(CP: TObject; Count: Word);
+var
+Buffer: string[255];
+BufferIndex: Integer;
+I: word;
+C : Ansichar;
 begin
-  //
+ // TODO: Do a better thing
+//This have to be changed to support better protocol and SOLID
+  for I := 1 to Count do
+  begin
+    C:= ComPort.GetChar;
+    if C=#6  then
+    begin
+      ACKReceived:=true;
+      Exit;
+    end;
+    Buffer:=Buffer+C;
+  end;
+  //ACK =>#6
   ACKReceived:=true;
 end;
 
 procedure TSerialProtocol.TimeOut(Sender: TObject);
 begin
   raise Exception.Create('Time Out');
+end;
+
+function TSerialProtocol.ReadBoard(): TStringList;
+var
+  ReceivedProg : TStringList;
+begin
+//TODO: implements
+    Error:= true;
+    ACKReceived:=true;
 end;
 
 end.
