@@ -77,6 +77,9 @@ type
     procedure BReadProdClick(Sender: TObject);
     procedure ESsidChange(Sender: TObject);
     procedure EWifiPassChange(Sender: TObject);
+    procedure FillProg(SSID: String; WifiKey: String; DHCP: Boolean;
+      IPAdress: String; Subnet: String; Gateway: String; DNS1: String;
+      DNS2: String; IPServer: String; AppKey: String; Period: String);
 
   const
     RegKey = 'Software\Editiel98\CellarManager\';
@@ -113,17 +116,16 @@ uses UProtocol;
 
 {$R *.dfm}
 
-// TODO: Change ProgHasChanged for wifi and params when values changes
 function TFPpale.CreateProg(): TStringList;
 var
-  IpAdress, SubnetMask, DNS1, DNS2, Gateway, SSID, PassWifi, APIKey, IpServer,
+  IPAdress, SubnetMask, DNS1, DNS2, Gateway, SSID, PassWifi, APIKey, IPServer,
     Period, DateDay, DateMonth, DateYear, DateHour, DateMinute: String;
   CurrentTime: TDateTime;
   ConfigArray: TStringList;
 
 begin
   ConfigArray := TStringList.create();
-  IpAdress := '';
+  IPAdress := '';
   SubnetMask := '';
   DNS1 := '';
   Gateway := '';
@@ -147,12 +149,12 @@ begin
 
   if not useDHCP then
   begin
-    IpAdress := IPCard;
+    IPAdress := IPCard;
     SubnetMask := SubNetCard;
     DNS1 := DNS1Card;
     Gateway := GatewayCard;
     DNS2 := DNS2Card;
-    if ((IpAdress = '') Or (SubnetMask = '') Or (Gateway = '') or (DNS1 = '') or
+    if ((IPAdress = '') Or (SubnetMask = '') Or (Gateway = '') or (DNS1 = '') or
       (DNS2 = '')) then
     begin
       MessageDlg
@@ -161,7 +163,7 @@ begin
       raise Exception.create('Message d''erreur');
     end;
     ConfigArray.Add('1');
-    ConfigArray.Add(IpAdress);
+    ConfigArray.Add(IPAdress);
     ConfigArray.Add(SubnetMask);
     ConfigArray.Add(Gateway);
     ConfigArray.Add(DNS1);
@@ -171,14 +173,14 @@ begin
   begin
     ConfigArray.Add('0');
   end;
-  IpServer := IpServerCard;
-  if IpServer = '' then
+  IPServer := IpServerCard;
+  if IPServer = '' then
   begin
     MessageDlg('L''adresse du serveur ne doit pas être vide',
       TMsgDlgType.mtError, mbOKCancel, 0);
     raise Exception.create('Message d''erreur');
   end;
-  ConfigArray.Add(IpServer);
+  ConfigArray.Add(IPServer);
   APIKey := EAppKey.Text;
   if APIKey = '' then
   begin
@@ -284,12 +286,52 @@ end;
 
 procedure TFPpale.ESsidChange(Sender: TObject);
 begin
-  ProgHasChanged:=True;
+  progHasChanged := True;
 end;
 
 procedure TFPpale.EWifiPassChange(Sender: TObject);
 begin
-  ProgHasChanged:=true;
+  progHasChanged := True;
+end;
+
+procedure TFPpale.FillProg(SSID: String; WifiKey: String; DHCP: Boolean;
+  IPAdress: String; Subnet: String; Gateway: String; DNS1: String; DNS2: String;
+  IPServer: String; AppKey: String; Period: String);
+begin
+  ESsid.Text := SSID;
+  CBDHCP.Checked := DHCP;
+  MEIpAdress.Text := IPAdress;
+  if not(IPAdress = '') then
+  begin
+    IPCard := validIpAdress(IPAdress);
+  end;
+  MESubnet.Text := Subnet;
+  if not(Subnet = '') then
+  begin
+    SubNetCard := validIpAdress(Subnet);
+  end;
+  MEGateway.Text := Gateway;
+  if not(Gateway = '') then
+  begin
+    GatewayCard := validIpAdress(Gateway);
+  end;
+  MEDns1.Text := DNS1;
+  if not(DNS1 = '') then
+  begin
+    DNS1Card := validIpAdress(DNS1);
+  end;
+  MEDns2.Text := DNS2;
+  if not(DNS2 = '') then
+  begin
+    DNS2Card := validIpAdress(DNS2);
+  end;
+  MEIpServer.Text := IPServer;
+  if not(IPServer = '') then
+  begin
+    IpServerCard := validIpAdress(IPServer);
+  end;
+  EAppKey.Text := AppKey;
+  EPeriod.Text := Period;
 end;
 
 { *
@@ -297,16 +339,48 @@ end;
   * }
 procedure TFPpale.BReadProdClick(Sender: TObject);
 var
-  test: TSerialProtocol;
+  serialProtocol: TSerialProtocol;
+  BoardConfig: TStringList;
+  rSSID, rIpAdress, rSubnet, rGateway, rDNS1, rDNS2, rIPServer, rAppKey,
+    rPeriod, rWifiKey: String;
+  rDHCP: Boolean;
 begin
-  // For tests
-  test := TSerialProtocol.create(self);
-  if not test.isInit then
+  rSSID := '';
+  rIpAdress := '';
+  rSubnet := '';
+  rGateway := '';
+  rDNS1 := '';
+  rDNS2 := '';
+  rIPServer := '';
+  rAppKey := '';
+  rPeriod := '';
+  rWifiKey := '';
+  rDHCP := True;
+  serialProtocol := TSerialProtocol.create(self);
+  BoardConfig := TStringList.create;
+  if not serialProtocol.isInit then
   begin
-    test.init(5, 9600, 8, 2, 1);
+    serialProtocol.init(PortNumber, BaudRate, BitNumber, Parity, StopBit);
   end;
+  try
+    // Open protocole and read datas
+    BoardConfig := serialProtocol.ReadBoard;
+    // TODO: Implements
+    // Store Data in app
+    { (   IPAdress: String; Subnet: String; Gateway: String; DNS1: String; DNS2: String;
+      IPServer: String; AppKey: String; Period: String); }
+    FillProg(rSSID, rWifiKey, rDHCP, rIpAdress, rSubnet, rGateway, rDNS1, rDNS2,
+      rIPServer, rAppKey, rPeriod);
+  except
+    on Exception do
+    begin
+      MessageDlg('Il y a eu une erreur lors de la lecture de la programmation',
+        TMsgDlgType.mtError, mbOKCancel, 0);
+    end;
 
-
+  end;
+  serialProtocol.Free;
+  BoardConfig.Free;
 end;
 
 { *
@@ -327,27 +401,28 @@ var
   toto: String;
   i: Integer;
   protocol: TSerialProtocol;
-  transfertResult : Boolean;
+  transfertResult: Boolean;
 begin
   prog := TStringList.create;
-  TransfertResult:= false;
+  transfertResult := false;
   StoreToRegistry();
-  protocol:=TSerialProtocol.create(self);
+  protocol := TSerialProtocol.create(self);
   try
     try
       prog := CreateProg();
-      protocol.Init(PortNumber,baudRate,BitNumber,Parity,StopBit);
-      transfertResult:=protocol.sendProgram(prog);
+      protocol.init(PortNumber, BaudRate, BitNumber, Parity, StopBit);
+      transfertResult := protocol.sendProgram(prog);
       if transfertResult then
       begin
-         MessageDlg('La programmation c''est bien déroulée.', TMsgDlgType.mtInformation, [TMsgDlgBtn.mbOK],0);
+        MessageDlg('La programmation c''est bien déroulée.',
+          TMsgDlgType.mtInformation, [TMsgDlgBtn.mbOK], 0);
       end
       else
       begin
-        MessageDlg('Il y a eu une erreur lors de la programmation', TMsgDlgType.mtError,
-          mbOKCancel, 0);
+        MessageDlg('Il y a eu une erreur lors de la programmation',
+          TMsgDlgType.mtError, mbOKCancel, 0);
       end;
-      //Remote
+      // Remote
       toto := IntToStr(prog.Count);
       SBStatus.panels[0].Text := toto;
       Memo1.lines.Clear;
@@ -355,7 +430,7 @@ begin
       begin
         Memo1.lines.Add('step ' + IntToStr(i) + ' ' + prog[i]);
       end;
-      //end remove
+      // end remove
     except
       on E: Exception do
       begin
@@ -391,9 +466,9 @@ begin
   DNS1Card := '';
   DNS2Card := '';
   IpServerCard := '';
-  isValidate := False;
-  serialHasChanged := False;
-  progHasChanged := False;
+  isValidate := false;
+  serialHasChanged := false;
+  progHasChanged := false;
   useDHCP := True;
   LoadComNumber();
   LoadFromRegistry();
@@ -455,22 +530,21 @@ begin
       reg.WriteInteger('Datas', CBDatas.ItemIndex);
       // Store stop Bit
       reg.WriteInteger('Stop', CBStop.ItemIndex);
-      serialHasChanged := False;
+      serialHasChanged := false;
     end;
     if progHasChanged then
     begin
-      // TODO: Add config infos, without Wifi pass
-      reg.WriteString('SSID',ESsid.Text);
-      reg.WriteBool('UseDHCP',CBDHCP.Checked);
-      reg.WriteString('IP_Adress',MEIpAdress.Text);
-      reg.WriteString('Subnet',MESubnet.Text);
-      reg.WriteString('Gateway',MEGateway.Text);
-      reg.WriteString('DNS1',MEDns1.Text);
-      reg.WriteString('DNS2',MEDns2.Text);
-      reg.WriteString('Server_IP',MEIpServer.Text);
-      reg.WriteString('App_Key',EAppKey.Text);
-      reg.WriteString('Period',EPeriod.Text);
-      progHasChanged := False;
+      reg.WriteString('SSID', ESsid.Text);
+      reg.WriteBool('UseDHCP', CBDHCP.Checked);
+      reg.WriteString('IP_Adress', MEIpAdress.Text);
+      reg.WriteString('Subnet', MESubnet.Text);
+      reg.WriteString('Gateway', MEGateway.Text);
+      reg.WriteString('DNS1', MEDns1.Text);
+      reg.WriteString('DNS2', MEDns2.Text);
+      reg.WriteString('Server_IP', MEIpServer.Text);
+      reg.WriteString('App_Key', EAppKey.Text);
+      reg.WriteString('Period', EPeriod.Text);
+      progHasChanged := false;
     end;
   finally
     reg.Free;
@@ -481,12 +555,15 @@ end;
 procedure TFPpale.LoadFromRegistry;
 var
   reg: TRegistry;
+  rSSID, rIpAdress, rSubnet, rGateway, rDNS1, rDNS2, rIPServer, rAppKey,
+    rPeriod: String;
+  rDHCP: Boolean;
 begin
   reg := TRegistry.create(KEY_READ);
   reg.RootKey := HKEY_CURRENT_USER;
   if reg.KeyExists(RegKey) then
   begin
-    reg.OpenKey(RegKey, False);
+    reg.OpenKey(RegKey, false);
     // Load Parity
     CBParity.ItemIndex := reg.ReadInteger('Parity');
     // Load BaudRate
@@ -495,47 +572,26 @@ begin
     CBDatas.ItemIndex := reg.ReadInteger('Datas');
     // Load stop Bit
     CBStop.ItemIndex := reg.ReadInteger('Stop');
-    //Reading infos  for Configuration
-    ESsid.Text:=reg.ReadString('SSID');
+    // Reading infos  for Configuration
+    rSSID := reg.ReadString('SSID');
     try
-       CBDHCP.Checked:=reg.ReadBool('UseDHCP');
-    except on Exception do
-    begin
-       CBDHCP.Checked:=true;
+      rDHCP := reg.ReadBool('UseDHCP');
+    except
+      on Exception do
+      begin
+        rDHCP := True;
+      end;
     end;
-    end;
-      MEIpAdress.Text:=reg.ReadString('IP_Adress');
-      if not (MEIpAdress.Text ='') then
-      begin
-        IPCard:=validIpAdress(MEIpAdress.Text);
-      end;
-      MESubnet.Text:=reg.ReadString('Subnet');
-      if not (MESubnet.Text='') then
-      begin
-        SubNetCard:=validIpAdress(MESubnet.Text);
-      end;
-      MEGateway.Text:=reg.ReadString('Gateway');
-       if not (MEGateway.Text='') then
-      begin
-        GatewayCard:=validIpAdress(MEGateway.Text);
-      end;
-      MEDns1.Text:=reg.ReadString('DNS1');
-       if not (MEDns1.Text='') then
-      begin
-        DNS1Card:=validIpAdress(MEDns1.Text);
-      end;
-      MEDns2.Text:=reg.ReadString('DNS2');
-       if not (MEDns2.Text='') then
-      begin
-        DNS2Card:=validIpAdress(MEDns2.Text);
-      end;
-      MEIpServer.Text:=reg.ReadString('Server_IP');
-       if not (MEIpServer.Text='') then
-      begin
-        IpServerCard:=validIpAdress(MEIpServer.Text);
-      end;
-      EAppKey.Text:=reg.ReadString('App_Key');
-      EPeriod.Text:=reg.ReadString('Period');
+    rIpAdress := reg.ReadString('IP_Adress');
+    rSubnet := reg.ReadString('Subnet');
+    rGateway := reg.ReadString('Gateway');
+    rDNS1 := reg.ReadString('DNS1');
+    rDNS2 := reg.ReadString('DNS2');
+    rIPServer := reg.ReadString('Server_IP');
+    rAppKey := reg.ReadString('App_Key');
+    rPeriod := reg.ReadString('Period');
+    FillProg(rSSID, '', rDHCP, rIpAdress, rSubnet, rGateway, rDNS1, rDNS2,
+      rIPServer, rAppKey, rPeriod);
   end;
   reg.Free;
 end;
@@ -544,7 +600,7 @@ procedure TFPpale.MEDns1Exit(Sender: TObject);
 begin
   try
     DNS1Card := validIpAdress(MEDns1.Text);
-    ProgHasChanged:=true;
+    progHasChanged := True;
   except
     on E: EArgumentException do
     begin
@@ -560,7 +616,7 @@ procedure TFPpale.MEDns2Exit(Sender: TObject);
 begin
   try
     DNS2Card := validIpAdress(MEDns2.Text);
-    ProgHasChanged:=true;
+    progHasChanged := True;
   except
     on E: EArgumentException do
     begin
@@ -575,7 +631,7 @@ procedure TFPpale.MEGatewayExit(Sender: TObject);
 begin
   try
     GatewayCard := validIpAdress(MEGateway.Text);
-    ProgHasChanged:=true;
+    progHasChanged := True;
   except
     on E: EArgumentException do
     begin
@@ -590,7 +646,7 @@ procedure TFPpale.MEIpAdressExit(Sender: TObject);
 begin
   try
     IPCard := validIpAdress(MEIpAdress.Text);
-    ProgHasChanged:=true;
+    progHasChanged := True;
   except
     on E: EArgumentException do
     begin
@@ -606,7 +662,7 @@ procedure TFPpale.MEIpServerExit(Sender: TObject);
 begin
   try
     IpServerCard := validIpAdress(MEIpServer.Text);
-    ProgHasChanged:=true;
+    progHasChanged := True;
   except
     on E: EArgumentException do
     begin
@@ -622,12 +678,11 @@ procedure TFPpale.MESubnetExit(Sender: TObject);
 begin
   try
     SubNetCard := validIpAdress(MEIpAdress.Text);
-    ProgHasChanged:=true;
+    progHasChanged := True;
   except
     on E: EArgumentException do
     begin
-      MessageDlg('Le masque est invalide', TMsgDlgType.mtError,
-        mbOKCancel, 0);
+      MessageDlg('Le masque est invalide', TMsgDlgType.mtError, mbOKCancel, 0);
       MESubnet.Text := '';
     end;
   end;
@@ -646,7 +701,7 @@ begin
   begin
     MessageDlg('Key not found', TMsgDlgType.mtWarning, mbOKCancel, 0);
   end;
-  openResult := reg.OpenKey('HARDWARE\DEVICEMAP\SERIALCOMM\', False);
+  openResult := reg.OpenKey('HARDWARE\DEVICEMAP\SERIALCOMM\', false);
   if (not openResult) then
   begin
     MessageDlg('Key not found', TMsgDlgType.mtWarning, mbOKCancel, 0);
