@@ -20,8 +20,6 @@ object FPpale: TFPpale
     ActivePage = TSProgrammation
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 624
-    ExplicitHeight = 415
     object TSConfig: TTabSheet
       Caption = 'Configuration'
       object GBParamsCom: TGroupBox
@@ -124,7 +122,6 @@ object FPpale: TFPpale
           Text = '1'
           Items.Strings = (
             '1'
-            '1.5'
             '2')
         end
         object BValidateParam: TButton
@@ -168,6 +165,7 @@ object FPpale: TFPpale
           Width = 177
           Height = 23
           TabOrder = 0
+          OnChange = ESsidChange
         end
         object EWifiPass: TEdit
           Left = 144
@@ -175,6 +173,7 @@ object FPpale: TFPpale
           Width = 281
           Height = 23
           TabOrder = 1
+          OnChange = EWifiPassChange
         end
         object CBDHCP: TCheckBox
           Left = 16
@@ -279,7 +278,7 @@ object FPpale: TFPpale
             ParentFont = False
             TabOrder = 2
             Text = '   .   .   .   '
-            OnChange = MEGatewayChange
+            OnExit = MEGatewayExit
           end
           object MEDns1: TMaskEdit
             Left = 144
@@ -296,7 +295,7 @@ object FPpale: TFPpale
             ParentFont = False
             TabOrder = 3
             Text = '   .   .   .   '
-            OnChange = MEDns1Change
+            OnExit = MEDns1Exit
           end
           object MEDns2: TMaskEdit
             Left = 144
@@ -313,7 +312,7 @@ object FPpale: TFPpale
             ParentFont = False
             TabOrder = 4
             Text = '   .   .   .   '
-            OnChange = MEDns2Change
+            OnExit = MEDns2Exit
           end
         end
       end
@@ -415,6 +414,7 @@ object FPpale: TFPpale
         Height = 25
         Caption = 'Lecture'
         TabOrder = 2
+        OnClick = BReadProdClick
       end
       object BWriteProg: TButton
         Left = 520
@@ -448,8 +448,5 @@ object FPpale: TFPpale
         Text = '(c)2024 Editiel98'
         Width = 50
       end>
-    ExplicitLeft = 8
-    ExplicitTop = 519
-    ExplicitWidth = 624
   end
 end
